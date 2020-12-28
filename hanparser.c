@@ -729,10 +729,12 @@ static bool parse_cosem( uint8_t* array, size_t array_bytes )
  * End COSEM / HAN parsing logic
  ******************************************************************************/
 
-static void parse_msdu( uint8_t* start, size_t bytes )
+static bool parse_msdu( uint8_t* start, size_t bytes )
 {
-  if( bytes < 8 )
-    return reset_parser("Too little data in the MSDU\n");
+  if( bytes < 8 ) {
+    reset_parser("Too little data in the MSDU\n");
+    return false;
+  }
 
   DPRINT("Parsing MSDU\n");
 
@@ -747,10 +749,7 @@ static void parse_msdu( uint8_t* start, size_t bytes )
   }
   DPRINT("\n");
 
-  // Try to parse packet into HAN measurements and call callback if successful
-  if( parse_cosem(&start[8], bytes - 8) && cb != NULL ) {
-    cb(&parsed_data);
-  }
+  return parse_cosem(&start[8], bytes - 8);
 }
 
 void han_parser_input_byte(uint8_t byte)
@@ -787,6 +786,8 @@ void han_parser_input_byte(uint8_t byte)
       // make sure length is sane
       if( hdlc_length > sizeof(input_buffer) - 2 )
         return reset_parser("length would overflow buffer");
+
+      DPRINTF("PKTlen %d\n", hdlc_length);
 
       // start parsing dst addr
       dst_addr_size = 1;
@@ -839,7 +840,7 @@ void han_parser_input_byte(uint8_t byte)
         DPRINT("HCS checks out\n");
   }
   // Check CRC and parse packet on close
-  else if( input_buffer_pos == hdlc_length + 2 ) {
+  else if( input_buffer_pos >= hdlc_length + 2 ) {
       // we have the full package plus the two flag bytes
       // check final flag byte
       if( input_buffer[1 + hdlc_length] != HDLC_FLAG )
@@ -850,9 +851,14 @@ void han_parser_input_byte(uint8_t byte)
           return reset_parser("invalid FCS CRC");
       }
 
-      // parse contents
-      parse_msdu( &input_buffer[hcs_offset + 2],
-                  hdlc_length - 2 - 1 - 2 - dst_addr_size - src_addr_size - 2 );
+      // Try to parse packet into HAN measurements and call callback if successful
+      if( parse_msdu( &input_buffer[hcs_offset + 2],
+                      hdlc_length - 2 - 1 - 2 - dst_addr_size - src_addr_size - 2 ) ) {
+        if( cb != NULL ) {
+          cb(&parsed_data);
+        }
+      }
+
       reset_parser(NULL);
 
       // set pos back to 1 to allow restarted communication
