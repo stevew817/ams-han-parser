@@ -28,6 +28,7 @@
 #include "hanparser.h"
 #include <stddef.h>
 #include <stdbool.h>
+#include <stdlib.h>
 #include <string.h>
 
 // Include dependencies
@@ -563,6 +564,8 @@ static bool parse_cosem( uint8_t* array, size_t array_bytes )
         &detected_list->mappings[mapping_it];
 
       while( mapping->element != END_OF_LIST ) {
+          long abs_val;
+
           item_found = get_element_by_sequence_number(
             array, array_bytes, mapping->cosem_element_offset,
             &temp_item_ptr, &temp_item_size, &item_type );
@@ -632,8 +635,10 @@ static bool parse_cosem( uint8_t* array, size_t array_bytes )
                 temp_item_ptr, temp_item_size, item_type, mapping->exponent);
               parsed_data.has_line_data = true;
 
-              DPRINTF("Current L1 %d.%03u A\n",
-                parsed_data.current_l1 / 1000, parsed_data.current_l1 % 1000);
+              abs_val = labs(parsed_data.current_l1);
+              DPRINTF("Current L1 %s%ld.%03ld A\n",
+                parsed_data.current_l1 < 0 ? "-" : "",
+                abs_val / 1000, abs_val % 1000);
               break;
             case CURRENT_L2:
               parsed_data.current_l2 = parse_int(
@@ -641,8 +646,10 @@ static bool parse_cosem( uint8_t* array, size_t array_bytes )
               parsed_data.has_line_data = true;
               parsed_data.is_3p = true;
 
-              DPRINTF("Current L2 %d.%03u A\n",
-                parsed_data.current_l2 / 1000, parsed_data.current_l2 % 1000);
+              abs_val = labs(parsed_data.current_l2);
+              DPRINTF("Current L2 %s%ld.%03ld A\n",
+                parsed_data.current_l2 < 0 ? "-" : "",
+                abs_val / 1000, abs_val % 1000);
               break;
             case CURRENT_L3:
               parsed_data.current_l3 = parse_int(
@@ -650,8 +657,10 @@ static bool parse_cosem( uint8_t* array, size_t array_bytes )
               parsed_data.has_line_data = true;
               parsed_data.is_3p = true;
 
-              DPRINTF("Current L3 %d.%03u A\n",
-                parsed_data.current_l3 / 1000, parsed_data.current_l3 % 1000);
+              abs_val = labs(parsed_data.current_l3);
+              DPRINTF("Current L3 %s%ld.%03ld A\n",
+                parsed_data.current_l3 < 0 ? "-" : "",
+                abs_val / 1000, abs_val % 1000);
               break;
             case VOLTAGE_L1:
               parsed_data.voltage_l1 = parse_uint(
