@@ -26,8 +26,10 @@
  ******************************************************************************/
 
 #include "hanparser.h"
+#include <inttypes.h>
 #include <stddef.h>
 #include <stdbool.h>
+#include <stdlib.h>
 #include <string.h>
 
 // Include dependencies
@@ -133,11 +135,11 @@ static bool find_array_in_array( const uint8_t* haystack,
 
 // Parse a COSEM-encoded byte array to an unsigned integer based on its length
 // and type.
-static uint32_t parse_uint( uint8_t* ptr,
+static uint64_t parse_uint( uint8_t* ptr,
                             size_t size,
                             cosem_type_t type,
                             int8_t exponent ) {
-  uint32_t parsed_number = 0;
+  uint64_t parsed_number = 0;
 
   if( type == TYPE_UINT ) {
     if( size == 1 )
@@ -146,6 +148,11 @@ static uint32_t parse_uint( uint8_t* ptr,
       parsed_number = (ptr[0] << 8) | ptr[1];
     if( size == 4 )
       parsed_number = (ptr[0] << 24) | (ptr[1] << 16) | (ptr[2] << 8) | ptr[3];
+    if( size == 8 )
+      parsed_number = ((uint64_t)ptr[0] << 56) | ((uint64_t)ptr[1] << 48) |
+                      ((uint64_t)ptr[2] << 40) | ((uint64_t)ptr[3] << 32) |
+                      ((uint64_t)ptr[4] << 24) | ((uint64_t)ptr[5] << 16) |
+                      ((uint64_t)ptr[6] << 8)  | (uint64_t)ptr[7];
   }
 
   if( type == TYPE_INT ) {
@@ -159,6 +166,13 @@ static uint32_t parse_uint( uint8_t* ptr,
     if( size == 4 )
       parsed_number = ( (int32_t)( (ptr[0] << 24) | (ptr[1] << 16) |
                                    (ptr[2] << 8)  | ptr[3] ) );
+    if( size == 8 )
+      parsed_number = ( (int64_t)(
+        ((uint64_t)ptr[0] << 56) | ((uint64_t)ptr[1] << 48) |
+        ((uint64_t)ptr[2] << 40) | ((uint64_t)ptr[3] << 32) |
+        ((uint64_t)ptr[4] << 24) | ((uint64_t)ptr[5] << 16) |
+        ((uint64_t)ptr[6] << 8)  | (uint64_t)ptr[7]
+      ) );
   }
 
   while( exponent < 0 ) {
@@ -176,11 +190,11 @@ static uint32_t parse_uint( uint8_t* ptr,
 
 // Parse a COSEM-encoded byte array to a signed integer based on its length
 // and type.
-static int32_t parse_int( uint8_t* ptr,
+static int64_t parse_int( uint8_t* ptr,
                           size_t size,
                           cosem_type_t type,
                           int8_t exponent ) {
-  int32_t parsed_number = 0;
+  int64_t parsed_number = 0;
 
   if( type == TYPE_UINT ) {
     if( ptr[0] & 0x80 )
@@ -192,6 +206,11 @@ static int32_t parse_int( uint8_t* ptr,
       parsed_number = (ptr[0] << 8) | ptr[1];
     if( size == 4 )
       parsed_number = (ptr[0] << 24) | (ptr[1] << 16) | (ptr[2] << 8) | ptr[3];
+    if( size == 8 )
+      parsed_number = ((uint64_t)ptr[0] << 56) | ((uint64_t)ptr[1] << 48) |
+                      ((uint64_t)ptr[2] << 40) | ((uint64_t)ptr[3] << 32) |
+                      ((uint64_t)ptr[4] << 24) | ((uint64_t)ptr[5] << 16) |
+                      ((uint64_t)ptr[6] << 8)  | (uint64_t)ptr[7];
   }
 
   if( type == TYPE_INT ) {
@@ -202,6 +221,13 @@ static int32_t parse_int( uint8_t* ptr,
     if( size == 4 )
       parsed_number = ( (int32_t)( (ptr[0] << 24) | (ptr[1] << 16) |
                                    (ptr[2] << 8)  | ptr[3] ) );
+    if( size == 8 )
+      parsed_number = ( (int64_t)(
+        ((uint64_t)ptr[0] << 56) | ((uint64_t)ptr[1] << 48) |
+        ((uint64_t)ptr[2] << 40) | ((uint64_t)ptr[3] << 32) |
+        ((uint64_t)ptr[4] << 24) | ((uint64_t)ptr[5] << 16) |
+        ((uint64_t)ptr[6] << 8)  | (uint64_t)ptr[7]
+      ) );
   }
 
   while( exponent < 0 ) {
@@ -291,6 +317,28 @@ static bool get_element_by_sequence_number( uint8_t* start,
         }
         item_counter++;
         EAT_BYTES(2);
+        break;
+      case 0x14:
+        // int64
+        if(item_counter == seqnum) {
+            *item_ptr = &start[1];
+            *item_size = 8;
+            *item_type = TYPE_INT;
+            return true;
+        }
+        item_counter++;
+        EAT_BYTES(9);
+        break;
+      case 0x15:
+        // uint64
+        if(item_counter == seqnum) {
+            *item_ptr = &start[1];
+            *item_size = 8;
+            *item_type = TYPE_UINT;
+            return true;
+        }
+        item_counter++;
+        EAT_BYTES(9);
         break;
       case 0x16:
         // enum (uint8)
@@ -389,36 +437,50 @@ static bool parse_cosem( uint8_t* array, size_t array_bytes )
           break;
         case 0x10:
           PRINT_LEVEL;
-          DPRINTF("(%d) int16: %d\n", item_counter,
-                                      parse_int(&start[1], 2, TYPE_INT, 0));
+          DPRINTF("(%d) int16: %" PRId64 "\n",
+                  item_counter, parse_int(&start[1], 2, TYPE_INT, 0));
           item_counter++;
           EAT_BYTES(3);
           break;
         case 0x12:
           PRINT_LEVEL;
-          DPRINTF("(%d) uint16: %u\n", item_counter,
-                                       parse_uint(&start[1], 2, TYPE_UINT, 0));
+          DPRINTF("(%d) uint16: %" PRIu64 "\n",
+                  item_counter, parse_uint(&start[1], 2, TYPE_UINT, 0));
           item_counter++;
           EAT_BYTES(3);
           break;
         case 0x06:
           PRINT_LEVEL;
-          DPRINTF("(%d) uint32: %u\n", item_counter,
-                                       parse_uint(&start[1], 4, TYPE_UINT, 0));
+          DPRINTF("(%d) uint32: %" PRIu64 "\n",
+                  item_counter, parse_uint(&start[1], 4, TYPE_UINT, 0));
           item_counter++;
           EAT_BYTES(5);
           break;
         case 0x0F:
           PRINT_LEVEL;
-          DPRINTF("(%d) int8: %d\n", item_counter,
-                                     parse_int(start, 2, TYPE_INT, 0));
+          DPRINTF("(%d) int8: %" PRId64 "\n",
+                  item_counter, parse_int(start, 1, TYPE_INT, 0));
           item_counter++;
           EAT_BYTES(2);
           break;
+        case 0x14:
+          PRINT_LEVEL;
+          DPRINTF("(%d) int64: %" PRId64 "\n",
+                  item_counter, parse_int(&start[1], 8, TYPE_INT, 0));
+          item_counter++;
+          EAT_BYTES(9);
+          break;
+        case 0x15:
+          PRINT_LEVEL;
+          DPRINTF("(%d) uint64: %" PRIu64 "\n",
+                  item_counter, parse_uint(&start[1], 8, TYPE_UINT, 0));
+          item_counter++;
+          EAT_BYTES(9);
+          break;
         case 0x16:
           PRINT_LEVEL;
-          DPRINTF("(%d) enum: %u\n", item_counter,
-                                     parse_uint(&start[1], 1, TYPE_UINT, 0));
+          DPRINTF("(%d) enum: %" PRIu64 "\n",
+                  item_counter, parse_uint(&start[1], 1, TYPE_UINT, 0));
           item_counter++;
           EAT_BYTES(2);
           break;
@@ -563,6 +625,8 @@ static bool parse_cosem( uint8_t* array, size_t array_bytes )
         &detected_list->mappings[mapping_it];
 
       while( mapping->element != END_OF_LIST ) {
+          long long abs_val;
+
           item_found = get_element_by_sequence_number(
             array, array_bytes, mapping->cosem_element_offset,
             &temp_item_ptr, &temp_item_size, &item_type );
@@ -578,7 +642,7 @@ static bool parse_cosem( uint8_t* array, size_t array_bytes )
                 temp_item_ptr, temp_item_size, item_type, mapping->exponent);
               parsed_data.has_power_data = true;
 
-              DPRINTF("Active power: %u watt\n",
+              DPRINTF("Active power: %" PRIu64 " watt\n",
                       parsed_data.active_power_import);
               break;
             case ACTIVE_POWER_EXPORT:
@@ -586,7 +650,7 @@ static bool parse_cosem( uint8_t* array, size_t array_bytes )
                 temp_item_ptr, temp_item_size, item_type, mapping->exponent);
               parsed_data.has_line_data = true;
 
-              DPRINTF("Active power (export): %u watt\n",
+              DPRINTF("Active power (export): %" PRIu64 " watt\n",
                       parsed_data.active_power_export);
               break;
             case REACTIVE_POWER_IMPORT:
@@ -594,7 +658,7 @@ static bool parse_cosem( uint8_t* array, size_t array_bytes )
                 temp_item_ptr, temp_item_size, item_type, mapping->exponent);
               parsed_data.has_line_data = true;
 
-              DPRINTF("Reactive power (import): %u watt\n",
+              DPRINTF("Reactive power (import): %" PRIu64 " watt\n",
                       parsed_data.reactive_power_import);
               break;
             case REACTIVE_POWER_EXPORT:
@@ -602,7 +666,7 @@ static bool parse_cosem( uint8_t* array, size_t array_bytes )
                 temp_item_ptr, temp_item_size, item_type, mapping->exponent);
               parsed_data.has_line_data = true;
 
-              DPRINTF("Reactive power (export): %u watt\n",
+              DPRINTF("Reactive power (export): %" PRIu64 " watt\n",
                       parsed_data.reactive_power_export);
               break;
             case METER_ID:
@@ -632,8 +696,10 @@ static bool parse_cosem( uint8_t* array, size_t array_bytes )
                 temp_item_ptr, temp_item_size, item_type, mapping->exponent);
               parsed_data.has_line_data = true;
 
-              DPRINTF("Current L1 %d.%03u A\n",
-                parsed_data.current_l1 / 1000, parsed_data.current_l1 % 1000);
+              abs_val = llabs(parsed_data.current_l1);
+              DPRINTF("Current L1 %s%lld.%03lld A\n",
+                parsed_data.current_l1 < 0 ? "-" : "",
+                abs_val / 1000, abs_val % 1000);
               break;
             case CURRENT_L2:
               parsed_data.current_l2 = parse_int(
@@ -641,8 +707,10 @@ static bool parse_cosem( uint8_t* array, size_t array_bytes )
               parsed_data.has_line_data = true;
               parsed_data.is_3p = true;
 
-              DPRINTF("Current L2 %d.%03u A\n",
-                parsed_data.current_l2 / 1000, parsed_data.current_l2 % 1000);
+              abs_val = llabs(parsed_data.current_l2);
+              DPRINTF("Current L2 %s%lld.%03lld A\n",
+                parsed_data.current_l2 < 0 ? "-" : "",
+                abs_val / 1000, abs_val % 1000);
               break;
             case CURRENT_L3:
               parsed_data.current_l3 = parse_int(
@@ -650,8 +718,10 @@ static bool parse_cosem( uint8_t* array, size_t array_bytes )
               parsed_data.has_line_data = true;
               parsed_data.is_3p = true;
 
-              DPRINTF("Current L3 %d.%03u A\n",
-                parsed_data.current_l3 / 1000, parsed_data.current_l3 % 1000);
+              abs_val = llabs(parsed_data.current_l3);
+              DPRINTF("Current L3 %s%lld.%03lld A\n",
+                parsed_data.current_l3 < 0 ? "-" : "",
+                abs_val / 1000, abs_val % 1000);
               break;
             case VOLTAGE_L1:
               parsed_data.voltage_l1 = parse_uint(
@@ -659,7 +729,7 @@ static bool parse_cosem( uint8_t* array, size_t array_bytes )
               parsed_data.has_line_data = true;
               parsed_data.is_3p = true;
 
-              DPRINTF("Voltage L1 %u V\n", parsed_data.voltage_l1);
+              DPRINTF("Voltage L1 %" PRIu64 " V\n", parsed_data.voltage_l1);
               break;
             case VOLTAGE_L2:
               parsed_data.voltage_l2 = parse_uint(
@@ -667,7 +737,7 @@ static bool parse_cosem( uint8_t* array, size_t array_bytes )
               parsed_data.has_line_data = true;
               parsed_data.is_3p = true;
 
-              DPRINTF("Voltage L2 %u V\n", parsed_data.voltage_l2);
+              DPRINTF("Voltage L2 %" PRIu64 " V\n", parsed_data.voltage_l2);
               break;
             case VOLTAGE_L3:
               parsed_data.voltage_l3 = parse_uint(
@@ -675,14 +745,14 @@ static bool parse_cosem( uint8_t* array, size_t array_bytes )
               parsed_data.has_line_data = true;
               parsed_data.is_3p = true;
 
-              DPRINTF("Voltage L3 %u V\n", parsed_data.voltage_l3);
+              DPRINTF("Voltage L3 %" PRIu64 " V\n", parsed_data.voltage_l3);
               break;
             case ACTIVE_ENERGY_IMPORT:
               parsed_data.active_energy_import = parse_uint(
                 temp_item_ptr, temp_item_size, item_type, mapping->exponent);
               parsed_data.has_energy_data = true;
 
-              DPRINTF("Total active energy import %d Wh\n",
+              DPRINTF("Total active energy import %" PRIu64 " Wh\n",
                 parsed_data.active_energy_import);
               break;
             case ACTIVE_ENERGY_EXPORT:
@@ -690,7 +760,7 @@ static bool parse_cosem( uint8_t* array, size_t array_bytes )
                 temp_item_ptr, temp_item_size, item_type, mapping->exponent);
               parsed_data.has_energy_data = true;
 
-              DPRINTF("Total active energy export %d Wh\n",
+              DPRINTF("Total active energy export %" PRIu64 " Wh\n",
                 parsed_data.active_energy_export);
               break;
             case REACTIVE_ENERGY_IMPORT:
@@ -698,7 +768,7 @@ static bool parse_cosem( uint8_t* array, size_t array_bytes )
                 temp_item_ptr, temp_item_size, item_type, mapping->exponent);
               parsed_data.has_energy_data = true;
 
-              DPRINTF("Total reactive energy import %d Wh\n",
+              DPRINTF("Total reactive energy import %" PRIu64 " Wh\n",
                 parsed_data.reactive_energy_import);
               break;
             case REACTIVE_ENERGY_EXPORT:
@@ -706,7 +776,7 @@ static bool parse_cosem( uint8_t* array, size_t array_bytes )
                 temp_item_ptr, temp_item_size, item_type, mapping->exponent);
               parsed_data.has_energy_data = true;
 
-              DPRINTF("Total reactive energy export %d Wh\n",
+              DPRINTF("Total reactive energy export %" PRIu64 " Wh\n",
                 parsed_data.reactive_energy_export);
               break;
             default:

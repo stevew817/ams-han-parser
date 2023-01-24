@@ -40,23 +40,23 @@ typedef struct {
     const char* meter_gsin;         /** Null-terminated meter GSIN, ASCII */
     const char* meter_model;        /** Null-terminated meter model, ASCII */
 
-    uint32_t active_power_import;   /** Active power in import direction, Watt */
-    uint32_t active_power_export;   /** Active power in export direction, Watt */
-    uint32_t reactive_power_import; /** Reactive power in import direction, VAr */
-    uint32_t reactive_power_export; /** Reactive power in export direction, VAr */
+    uint64_t active_power_import;   /** Active power in import direction, Watt */
+    uint64_t active_power_export;   /** Active power in export direction, Watt */
+    uint64_t reactive_power_import; /** Reactive power in import direction, VAr */
+    uint64_t reactive_power_export; /** Reactive power in export direction, VAr */
 
-    uint32_t voltage_l1;            /** Line/phase voltage for L1, Volt */
-    uint32_t voltage_l2;            /** Line/phase voltage for L2, Volt (3-phase only) */
-    uint32_t voltage_l3;            /** Line/phase voltage for L3, Volt (3-phase only) */
+    uint64_t voltage_l1;            /** Line/phase voltage for L1, Volt */
+    uint64_t voltage_l2;            /** Line/phase voltage for L2, Volt (3-phase only) */
+    uint64_t voltage_l3;            /** Line/phase voltage for L3, Volt (3-phase only) */
 
-    int32_t current_l1;             /** Current flowing through L1, milli-Ampere */
-    int32_t current_l2;             /** Current flowing through L2, milli-Ampere */
-    int32_t current_l3;             /** Current flowing through L3, milli-Ampere */
+    int64_t current_l1;             /** Current flowing through L1, milli-Ampere */
+    int64_t current_l2;             /** Current flowing through L2, milli-Ampere */
+    int64_t current_l3;             /** Current flowing through L3, milli-Ampere */
 
-    uint32_t active_energy_import;  /** Accumulated active energy in import direction, Wh */
-    uint32_t active_energy_export;  /** Accumulated active energy in export direction, Wh */
-    uint32_t reactive_energy_import;/** Accumulated reactive energy in import direction, VArh */
-    uint32_t reactive_energy_export;/** Accumulated reactive energy in export direction, VArh */
+    uint64_t active_energy_import;  /** Accumulated active energy in import direction, Wh */
+    uint64_t active_energy_export;  /** Accumulated active energy in export direction, Wh */
+    uint64_t reactive_energy_import;/** Accumulated reactive energy in import direction, VArh */
+    uint64_t reactive_energy_export;/** Accumulated reactive energy in export direction, VArh */
 
     bool is_3p;             /** If true: values for three phases are present, else only l1 */
     bool has_power_data;    /** If true: value for active_power_import is valid */
