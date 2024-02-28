@@ -35,7 +35,6 @@
 // Include dependencies
 #include "hanparser_platform.h"
 #include "known_lists.h"
-#include "esp_log.h"
 
 #define DPRINT han_parser_debug_print
 #define DPRINTF han_parser_debug_printf
