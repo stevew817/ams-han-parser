@@ -47,7 +47,7 @@ extern "C"
 #define HDLC_FLAG 0x7E
 
   // Input buffer to buffer incoming bytes until it contains a full message
-static uint8_t input_buffer[2048];
+static uint8_t input_buffer[1100];
 static size_t input_buffer_pos = 0;
 
   // Variables to track HDLC header sizes to avoid re-parsing

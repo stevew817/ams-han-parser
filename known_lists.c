@@ -197,9 +197,9 @@ const ams_known_list_t aidon_list_h0001 = {
   /*
     0202 0906 0000010000ff 090c 07e30c1001073b28ff8000ff
     0203 0906 0100010700ff 06 00000462 0202 0f00 161b
-	0203 0906 0100020700ff 06 00000000 0202 0f00 161b
-	0203 0906 0100030700ff 06 000005e3 0202 0f00 161d
-	0203 0906 0100040700ff 06 00000000 0202 0f00 161d
+	  0203 0906 0100020700ff 06 00000000 0202 0f00 161b
+	  0203 0906 0100030700ff 06 000005e3 0202 0f00 161d
+	  0203 0906 0100040700ff 06 00000000 0202 0f00 161d
     0203 0906 01001f0700ff 10 00000202 0fff 1621
     0203 0906 0100330700ff 10 004b0202 0fff 1621
     0203 0906 0100470700ff 10 00000202 0fff 1621
@@ -250,7 +250,6 @@ const ams_known_list_ids_mapping_t aidon_v0001_mapping = {
     NULL
   }
 };
-#endif //DISABLE_AIDON
 
 // Added new meter
 const ams_known_list_ids_mapping_t aidon_h0001_mapping = {
@@ -262,6 +261,9 @@ const ams_known_list_ids_mapping_t aidon_h0001_mapping = {
     NULL
   }
 };
+#endif //DISABLE_AIDON
+
+
 
 #ifndef DISABLE_KAMSTRUP
 const ams_known_list_t kamstrup_list2_3p = {
