@@ -84,6 +84,9 @@ typedef enum {
 #ifndef DISABLE_KAIFA
   KFM_001,
 #endif // DISABLE_KAIFA
+#ifndef DISABLE_AIDON_H0001
+  AIDON_H0001,
+#endif // DISABLE_AIDON_H0001
   // Insert more known IDs here, and add mapping to known_list_ids_mapping
   UNKNOWN /** End marker for mappings list */
 } ams_known_list_ids_t;

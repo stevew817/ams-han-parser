@@ -192,6 +192,49 @@ const ams_known_list_t aidon_list3_1p = {
   }
 };
 
+const ams_known_list_t aidon_list_h0001 = {
+  //Aidon list3 for 3phase new meter
+  /*
+    0202 0906 0000010000ff 090c 07e30c1001073b28ff8000ff
+    0203 0906 0100010700ff 06 00000462 0202 0f00 161b
+	  0203 0906 0100020700ff 06 00000000 0202 0f00 161b
+	  0203 0906 0100030700ff 06 000005e3 0202 0f00 161d
+	  0203 0906 0100040700ff 06 00000000 0202 0f00 161d
+    0203 0906 01001f0700ff 10 00000202 0fff 1621
+    0203 0906 0100330700ff 10 004b0202 0fff 1621
+    0203 0906 0100470700ff 10 00000202 0fff 1621
+    0203 0906 0100200700ff 12 09030202 0fff 1623
+    0203 0906 0100340700ff 12 09c30202 0fff 1623
+    0203 0906 0100480700ff 12 09040202 0fff 1623
+    0203 0906 0100150700ff 06 00000000 0202 0f00 161b
+    0203 0906 0100160700ff 06 00000000 0202 0f00 161b
+    0203 0906 0100170700ff 06 00000000 0202 0f00 161d
+    0203 0906 0100180700ff 06 00000000 0202 0f00 161d
+    0203 0906 0100290700ff 06 00000462 0202 0f00 161b
+    0203 0906 01002a0700ff 06 00000000 0202 0f00 161b
+    0203 0906 01002b0700ff 06 000005e2 0202 0f00 161d
+    0203 0906 01002c0700ff 06 00000000 0202 0f00 161d
+    0203 0906 01003d0700ff 06 00000000 0202 0f00 161b
+    0203 0906 01003e0700ff 06 00000000 0202 0f00 161b
+    0203 0906 01003f0700ff 06 00000000 0202 0f00 161d
+    0203 0906 0100400700ff 06 00000000 0202 0f00 161d
+    0203 0906 0100010800ff 06 00995986 0202 0f00 161e
+    0203 0906 0100020800ff 06 00000008 0202 0f00 161e
+    0203 0906 0100030800ff 06 0064ed4b 0202 0f00 1620
+    0203 0906 0100040800ff 06 00000005 0202 0f00 1620
+  */
+  106,
+  {
+    {CURRENT_L1, 20, 2},
+    {CURRENT_L2, 24, 2},
+    {CURRENT_L3, 28, 2},
+    {VOLTAGE_L1, 32, -1},
+    {VOLTAGE_L2, 36, -1},
+    {VOLTAGE_L3, 40, -1},
+    {END_OF_LIST, 0}
+  }
+};
+
 const ams_known_list_ids_mapping_t aidon_v0001_mapping = {
   AIDON_V0001,
   sizeof("AIDON_V0001") - 1,
@@ -207,7 +250,20 @@ const ams_known_list_ids_mapping_t aidon_v0001_mapping = {
     NULL
   }
 };
+
+// Added new meter
+const ams_known_list_ids_mapping_t aidon_h0001_mapping = {
+  AIDON_H0001,
+  0,
+  "",
+  {
+    &aidon_list_h0001,
+    NULL
+  }
+};
 #endif //DISABLE_AIDON
+
+
 
 #ifndef DISABLE_KAMSTRUP
 const ams_known_list_t kamstrup_list2_3p = {
@@ -571,6 +627,7 @@ const ams_known_list_ids_mapping_t* ams_known_list_ids_mapping[] = {
 #ifndef DISABLE_KAIFA
   &kaifa_v0001_mapping,
 #endif // DISABLE_KAIFA
+  &aidon_h0001_mapping,
   // add more mappings here when added to ams_known_list_ids_t
   NULL
 };
